@@ -1,2 +1,3 @@
-# MVT
-Mobile Vision Transformer-based Visual Object Tracking
+# MVT - Mobile Vision Transformer-based Visual Object Tracking
+The official implementation of **MVT**
+![MVT_block](assets/MVT_block_diagram.png)
