@@ -1,9 +1,11 @@
-# MVT - Mobile Vision Transformer-based Visual Object Tracking
+# MVT - Mobile Vision Transformer-based Visual Object Tracking [BMVC2023]
 The official implementation of **MVT**
 ![MVT_block](assets/MVT.png)
 
 ## News
 **`22-08-2023`**: The MVT tracker training and inference code is released
+
+**`21-08-2023`**: The paper is accepted at BMVC2023
 
 ## Installation
 
