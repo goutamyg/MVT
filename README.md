@@ -1,4 +1,4 @@
-# MVT - [Mobile Vision Transformer-based Visual Object Tracking](https://arxiv.org/abs/2309.05829) [BMVC2023] official implementation
+# [Mobile Vision Transformer-based Visual Object Tracking](https://arxiv.org/abs/2309.05829) [BMVC2023] official implementation
 ![MVT_block](assets/MVT.png)
 
 ## News
