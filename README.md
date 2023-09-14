@@ -2,6 +2,8 @@
 ![MVT_block](assets/MVT.png)
 
 ## News
+**`14-09-2023`**: The pretrained tracker model is released
+
 **`13-09-2023`**: The paper is available on [arXiv](https://arxiv.org/abs/2309.05829) now
 
 **`22-08-2023`**: The MVT tracker training and inference code is released
@@ -34,18 +36,19 @@ python tracking/train.py --script mobilevit_track --config mobilevit_256_128x1_g
 ```
 * The training logs will be saved under `output/logs/` folder
 
+## Pretrained tracker model
+The pretrained tracker model can be found [here](https://drive.google.com/drive/folders/1RAdn3ZXI_G7pBj4NDbtQVFPkClVd1IBm)
+
 ## Tracker Evaluation
 
 * Update the test dataset paths in `lib/test/evaluation/local.py`
-* Place the pretrained tracker model under `output/checkpoints/` folder 
+* Place the [pretrained tracker model](https://drive.google.com/drive/folders/1RAdn3ZXI_G7pBj4NDbtQVFPkClVd1IBm) under `output/checkpoints/` folder 
 * Run
 ```
 python tracking/test.py --tracker_name mobilevit_track --tracker_param mobilevit_256_128x1_got10k_ep100_cosine_annealing --dataset got10k_test/trackingnet/lasot
 ```
 * Change the `DEVICE` variable between `cuda` and `cpu` in the `--tracker_param` file for GPU and CPU-based inference, respectively  
 * The raw results will be stored under `output/test/` folder
-
-## Visualization
 
 ## Acknowledgements
 * We use the Separable Self-Attention Transformer implementation and the pretrained `MobileViT` backbone from [ml-cvnets](https://github.com/apple/ml-cvnets). Thank you!
