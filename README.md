@@ -55,3 +55,16 @@ python tracking/test.py --tracker_name mobilevit_track --tracker_param mobilevit
 * Our training code is built upon [OSTrack](https://github.com/botaoye/OSTrack) and [PyTracking](https://github.com/visionml/pytracking)
 
 ## Citation
+If our work is useful for your research, please consider citing:
+
+```Bibtex
+@InProceedings{Gopal2023Mob,
+  author       = "Goutam Yelluru Gopal and Maria Amer",
+  title        = "Mobile Vision Transformer-based Visual Object Tracking",
+  booktitle    = "34th British Machine Vision Conference (BMVC)",
+  year         = "2023",
+  pages        = "8",
+  month        = "Nov. 20-24",
+  address      = "Aberdeen, UK",
+}
+```
