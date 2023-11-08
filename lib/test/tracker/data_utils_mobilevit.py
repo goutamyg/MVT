@@ -33,8 +33,8 @@ class PreprocessorX(object):
 
 class PreprocessorX_onnx(object):
     def __init__(self):
-        self.mean = torch.tensor([0.0, 0.0, 0.0]).view((1, 3, 1, 1)).cuda()
-        self.std = torch.tensor([1.0, 1.0, 1.0]).view((1, 3, 1, 1)).cuda()
+        self.mean = torch.tensor([0.0, 0.0, 0.0]).view((1, 3, 1, 1)).numpy()
+        self.std = torch.tensor([1.0, 1.0, 1.0]).view((1, 3, 1, 1)).numpy()
 
     def process(self, img_arr: np.ndarray, amask_arr: np.ndarray):
         """img_arr: (H,W,3), amask_arr: (H,W)"""

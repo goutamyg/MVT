@@ -12,29 +12,71 @@ import cv2
 import os
 import numpy as np
 
-from lib.test.tracker.data_utils_mobilevit import Preprocessor
+from lib.test.tracker.data_utils_mobilevit import Preprocessor, PreprocessorX_onnx
 from lib.utils.box_ops import clip_box
 from lib.utils.ce_utils import generate_mask_cond
 
+import onnxruntime
+
+import tensorrt as trt
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+import pycuda.driver as cuda
+# import pycuda.autoinit
 
 class MobileViTTrack(BaseTracker):
     def __init__(self, params, dataset_name):
         super(MobileViTTrack, self).__init__(params)
-        network = build_mobilevit_track(params.cfg, training=False)
-        network.load_state_dict(torch.load(self.params.checkpoint, map_location='cpu')['net'], strict=True)
-        self.cfg = params.cfg
-        if self.cfg.TEST.DEVICE == 'cpu':
-            self.device = 'cpu'
-        else:
-            self.device = 'cuda'
-        self.network = network.to(self.device) # network.cuda()
-        self.network.eval()
-        self.preprocessor = Preprocessor()
-        self.state = None
 
+        self.cfg = params.cfg
+
+        if params.backend is "pytorch":
+            # load the pytorch model from disk
+            network = build_mobilevit_track(params.cfg, training=False)
+            network.load_state_dict(torch.load(self.params.checkpoint, map_location='cpu')['net'], strict=True)
+
+            # save the model state dictionary only (to verify the actual model size)
+            self.save_state_dict = True
+            if self.save_state_dict:
+                model_name = self.params.checkpoint
+                torch.save(network.state_dict(), model_name.split('.pth.tar')[0] + '_state_dict.pt')
+
+            if self.cfg.TEST.DEVICE == 'cpu':
+                self.device = 'cpu'
+            else:
+                self.device = 'cuda'
+            self.network = network.to(self.device)  # network.cuda()
+            self.network.eval()
+
+            self.preprocessor = Preprocessor()
+
+        elif params.backend is "onnx":
+            # load the onnx model from disk
+            onnx_checkpoint = self.params.checkpoint.split('.pth')[0] + '.onnx'
+            if os.path.isfile(onnx_checkpoint): # check whether the onnx file exists
+
+            self.ort_session = onnxruntime.InferenceSession(onnx_checkpoint, providers=['CPUExecutionProvider'])
+
+            self.preprocessor = PreprocessorX_onnx()
+
+        elif params.backend is "tensorrt":
+
+            # load tensor-rt engine from disk
+            trt_engine = self.params.checkpoint.split('.pth')[0] + '_FP16_TRT.plan'
+            TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
+            trt_runtime = trt.Runtime(TRT_LOGGER)
+            self.engine = self.load_trt_engine(trt_runtime, trt_engine)
+            self.context = self.engine.create_execution_context()
+            assert self.engine
+            assert self.context
+
+            # Setup I/O bindings
+            self.setup_io_binding_trt()
+
+            self.preprocessor = Preprocessor()
+
+        self.state = None
         self.feat_sz = self.cfg.TEST.SEARCH_SIZE // self.cfg.MODEL.BACKBONE.STRIDE
         # motion constraint
-        # self.output_window = hann2d(torch.tensor([self.feat_sz, self.feat_sz]).long(), centered=True).cuda()
         self.output_window = hann2d(torch.tensor([self.feat_sz, self.feat_sz]).long(), centered=True).to(self.device)
 
         # for debug
@@ -53,11 +95,6 @@ class MobileViTTrack(BaseTracker):
         self.save_all_boxes = params.save_all_boxes
         self.z_dict1 = {}
 
-        # save the model state dictionary only (to verify the actual model size)
-        self.save_state_dict = True
-        if self.save_state_dict:
-            model_name = self.params.checkpoint
-            torch.save(network.state_dict(), model_name.split('.pth.tar')[0] + '_state_dict.pt')
 
     def initialize(self, image, info: dict):
         # forward the template once
@@ -147,6 +184,51 @@ class MobileViTTrack(BaseTracker):
                     "all_boxes": all_boxes_save}
         else:
             return {"target_bbox": self.state}
+
+    def load_trt_engine(self, trt_runtime, plan_path):
+
+        trt.init_libnvinfer_plugins(None, "")
+        with open(plan_path, 'rb') as f:
+            engine_data = f.read()
+        engine = trt_runtime.deserialize_cuda_engine(engine_data)
+        return engine
+
+    def setup_io_binding_trt(self):
+        # Setup I/O bindings
+        self.inputs = []
+        self.outputs = []
+        self.allocations = []
+        for i in range(self.engine.num_bindings):
+            is_input = False
+            if self.engine.binding_is_input(i):
+                is_input = True
+            name = self.engine.get_binding_name(i)
+            dtype = self.engine.get_binding_dtype(i)
+            shape = self.engine.get_binding_shape(i)
+            if is_input:
+                self.batch_size = shape[0]
+            size = np.dtype(trt.nptype(dtype)).itemsize
+            for s in shape:
+                size *= s
+            allocation = cuda.mem_alloc(size)
+            binding = {
+                'index': i,
+                'name': name,
+                'dtype': np.dtype(trt.nptype(dtype)),
+                'shape': list(shape),
+                'allocation': allocation,
+            }
+            self.allocations.append(allocation)
+            if self.engine.binding_is_input(i):
+                self.inputs.append(binding)
+            else:
+                self.outputs.append(binding)
+
+        assert self.batch_size > 0
+        assert len(self.inputs) > 0
+        assert len(self.outputs) > 0
+        assert len(self.allocations) > 0
+
 
     def map_box_back(self, pred_box: list, resize_factor: float):
         cx_prev, cy_prev = self.state[0] + 0.5 * self.state[2], self.state[1] + 0.5 * self.state[3]

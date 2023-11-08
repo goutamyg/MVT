@@ -63,7 +63,7 @@ class Tracker:
         tracker = self.tracker_class(params, self.dataset_name)
         return tracker
 
-    def run_sequence(self, seq, debug=None):
+    def run_sequence(self, seq, backend, debug=None):
         """Run tracker on sequence.
         args:
             seq: Sequence to run the tracker on.
@@ -72,6 +72,7 @@ class Tracker:
             multiobj_mode: Which mode to use for multiple objects.
         """
         params = self.get_parameters()
+        params.backend = backend
 
         debug_ = debug
         if debug is None:
