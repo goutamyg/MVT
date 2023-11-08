@@ -28,11 +28,15 @@ class MobileViTTrack(BaseTracker):
         super(MobileViTTrack, self).__init__(params)
 
         self.cfg = params.cfg
+        self.backend = params.backend
 
-        if params.backend is "pytorch":
+        network = build_mobilevit_track(params.cfg, training=False)
+        self.network = network
+
+        if self.backend is "pytorch":
+
             # load the pytorch model from disk
-            network = build_mobilevit_track(params.cfg, training=False)
-            network.load_state_dict(torch.load(self.params.checkpoint, map_location='cpu')['net'], strict=True)
+            self.network.load_state_dict(torch.load(self.params.checkpoint, map_location='cpu')['net'], strict=True)
 
             # save the model state dictionary only (to verify the actual model size)
             self.save_state_dict = True
@@ -49,17 +53,18 @@ class MobileViTTrack(BaseTracker):
 
             self.preprocessor = Preprocessor()
 
-        elif params.backend is "onnx":
+        elif self.backend is "onnx":
+            self.device = "cpu"
             # load the onnx model from disk
             onnx_checkpoint = self.params.checkpoint.split('.pth')[0] + '.onnx'
-            if os.path.isfile(onnx_checkpoint): # check whether the onnx file exists
-
+            assert os.path.isfile(onnx_checkpoint) is True, ("Download the onnx model from https://drive.google.com/drive/folders/1RAdn3ZXI_G7pBj4NDbtQVFPkClVd1IBm "
+                                                              "or convert the pytorch model to onnx using tracking/pytorch2onnx.py script")
             self.ort_session = onnxruntime.InferenceSession(onnx_checkpoint, providers=['CPUExecutionProvider'])
 
             self.preprocessor = PreprocessorX_onnx()
 
-        elif params.backend is "tensorrt":
-
+        elif self.backend is "tensorrt":
+            self.device = 'cuda'
             # load tensor-rt engine from disk
             trt_engine = self.params.checkpoint.split('.pth')[0] + '_FP16_TRT.plan'
             TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
@@ -73,6 +78,10 @@ class MobileViTTrack(BaseTracker):
             self.setup_io_binding_trt()
 
             self.preprocessor = Preprocessor()
+
+        else:
+            print("not a valid backend. Choose from onnx and tensorrt!")
+            exit()
 
         self.state = None
         self.feat_sz = self.cfg.TEST.SEARCH_SIZE // self.cfg.MODEL.BACKBONE.STRIDE
@@ -101,18 +110,9 @@ class MobileViTTrack(BaseTracker):
         z_patch_arr, resize_factor, z_amask_arr = sample_target(image, info['init_bbox'], self.params.template_factor,
                                                     output_sz=self.params.template_size)
         self.z_patch_arr = z_patch_arr
+
         template = self.preprocessor.process(z_patch_arr, z_amask_arr)
-        with torch.no_grad():
-            # conv_1 (i.e., the first conv3x3 layer) output for
-            z = self.network.backbone.conv_1.forward(template.tensors.to(self.device))
-
-            # layer_1 (i.e., MobileNetV2 block) output
-            z = self.network.backbone.layer_1.forward(z)
-
-            # layer_2 (i.e., MobileNetV2 with down-sampling + 2 x MobileNetV2) output
-            z = self.network.backbone.layer_2.forward(z)
-
-            self.z_dict1 = z
+        self.z_dict = template
 
         self.box_mask_z = None
 
@@ -130,24 +130,53 @@ class MobileViTTrack(BaseTracker):
         x_patch_arr, resize_factor, x_amask_arr = sample_target(image, self.state, self.params.search_factor,
                                                                 output_sz=self.params.search_size)  # (x1, y1, w, h)
         search = self.preprocessor.process(x_patch_arr, x_amask_arr)
+        x_dict = search
 
-        with torch.no_grad():
-            x_dict = search
-            # merge the template and the search
-            # run the transformer
-            out_dict = self.network.forward(
-                template=self.z_dict1.to(self.device), search=x_dict.tensors.to(self.device))
+        if self.backend is "onnx":
+            ort_inputs = {'x': x_dict[0].astype(np.float32),
+                          'z': self.z_dict[0].astype(np.float32)}
+            out_ort = self.ort_session.run(None, ort_inputs)
 
-        # add hann windows
-        pred_score_map = out_dict['score_map']
-        response = self.output_window * pred_score_map
-        pred_boxes = self.network.box_head.cal_bbox(response, out_dict['size_map'], out_dict['offset_map'])
-        pred_boxes = pred_boxes.view(-1, 4)
-        # Baseline: Take the mean of all pred boxes as the final result
-        pred_box = (pred_boxes.mean(
-            dim=0) * self.params.search_size / resize_factor).tolist()  # (cx, cy, w, h) [0,1]
+            pred_score_map_ort = out_ort[1]
+
+            # add hann windows
+            response_ort = self.output_window * torch.from_numpy(pred_score_map_ort).to(self.device)
+
+            # response = pred_score_map
+            pred_boxes_ort = self.network.box_head.cal_bbox(response_ort, torch.from_numpy(out_ort[2]).to(self.device),
+                                                            torch.from_numpy(out_ort[3]).to(self.device))
+            pred_boxes_ort = pred_boxes_ort.view(-1, 4)
+
+            # Baseline: Take the mean of all pred boxes as the final result
+            pred_box_ort = (pred_boxes_ort.mean(
+                dim=0) * self.params.search_size / resize_factor).tolist()  # (cx, cy, w, h) [0,1]
+            best_bbox = self.map_box_back(pred_box_ort, resize_factor)
+
+        elif self.backend is "tensorrt":
+
+            # Process I/O and execute the network
+            cuda.memcpy_htod(self.inputs[0]['allocation'], np.ascontiguousarray(self.z_dict[0]))
+            cuda.memcpy_htod(self.inputs[1]['allocation'], np.ascontiguousarray(x_dict[0]))
+
+            self.context.execute_v2(self.allocations)
+            for o in range(len(self.outputs_numpy)):
+                cuda.memcpy_dtoh(self.outputs_numpy[o], self.outputs[o]['allocation'])
+
+            # add hann windows
+            response_trt = self.output_window * torch.from_numpy(self.outputs_numpy[1]).to(self.device)
+
+            pred_boxes_trt = self.network.box_head.cal_bbox(response_trt,
+                                                            torch.from_numpy(self.outputs_numpy[2]).to(self.device),
+                                                            torch.from_numpy(self.outputs_numpy[0]).to(self.device))
+            pred_boxes_ort = pred_boxes_trt.view(-1, 4)
+
+            # Baseline: Take the mean of all pred boxes as the final result
+            pred_box_trt = (pred_boxes_ort.mean(
+                dim=0) * self.params.search_size / resize_factor).tolist()  # (cx, cy, w, h) [0,1]
+            best_bbox = self.map_box_back(pred_box_trt, resize_factor)
+
         # get the final box result
-        self.state = clip_box(self.map_box_back(pred_box, resize_factor), H, W, margin=10)
+        self.state = clip_box(best_bbox, H, W, margin=10)
 
         # for debug
         if self.debug:
