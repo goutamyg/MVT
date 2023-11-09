@@ -13,7 +13,7 @@ def load_engine(trt_runtime, plan_path):
 
 
 tracker_name = 'MobileViT_Track_ep0100'
-tracker_config = 'mobilevit_256_64x2_got10k_ep100_cosine_annealing'
+tracker_config = 'mobilevit_256_128x1_got10k_ep100_cosine_annealing'
 
 onnx_path = os.path.join('output/checkpoints/train/mobilevit_track', tracker_config, '{}.onnx'.format(tracker_name))
 engine_name = os.path.join('output/checkpoints/train/mobilevit_track', tracker_config, '{}_FP16_TRT.plan'.format(tracker_name))

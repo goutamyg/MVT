@@ -38,7 +38,7 @@ def main():
     parser = argparse.ArgumentParser(description='Run tracker on sequence or dataset.')
     parser.add_argument('--tracker_name', type=str, default='mobilevit_track', help='Name of tracking method.')
     parser.add_argument('--tracker_param', type=str, default='mobilevit_256_128x1_got10k_ep100_cosine_annealing', help='Name of parameter file.')
-    parser.add_argument('--backend', type=str, default='onnx', help='Choose a backend: {pytorch, onnx, tensorrt}')
+    parser.add_argument('--backend', type=str, default='tensorrt', help='Choose a backend: {pytorch, onnx, tensorrt}')
     parser.add_argument('--runid', type=int, default=None, help='The run id.')
     parser.add_argument('--dataset_name', type=str, default='got10k_test', help='Name of dataset (otb, nfs, uav, tpl, vot, trackingnet, got10k_test, gotv, lasot).')
     parser.add_argument('--sequence', type=str, default=None, help='Sequence number or name.')

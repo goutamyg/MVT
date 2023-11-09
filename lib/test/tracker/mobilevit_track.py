@@ -21,7 +21,7 @@ import onnxruntime
 import tensorrt as trt
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import pycuda.driver as cuda
-# import pycuda.autoinit
+import pycuda.autoinit
 
 class MobileViTTrack(BaseTracker):
     def __init__(self, params, dataset_name):
@@ -33,27 +33,7 @@ class MobileViTTrack(BaseTracker):
         network = build_mobilevit_track(params.cfg, training=False)
         self.network = network
 
-        if self.backend is "pytorch":
-
-            # load the pytorch model from disk
-            self.network.load_state_dict(torch.load(self.params.checkpoint, map_location='cpu')['net'], strict=True)
-
-            # save the model state dictionary only (to verify the actual model size)
-            self.save_state_dict = True
-            if self.save_state_dict:
-                model_name = self.params.checkpoint
-                torch.save(network.state_dict(), model_name.split('.pth.tar')[0] + '_state_dict.pt')
-
-            if self.cfg.TEST.DEVICE == 'cpu':
-                self.device = 'cpu'
-            else:
-                self.device = 'cuda'
-            self.network = network.to(self.device)  # network.cuda()
-            self.network.eval()
-
-            self.preprocessor = Preprocessor()
-
-        elif self.backend is "onnx":
+        if self.backend is "onnx":
             self.device = "cpu"
             # load the onnx model from disk
             onnx_checkpoint = self.params.checkpoint.split('.pth')[0] + '.onnx'
@@ -77,7 +57,7 @@ class MobileViTTrack(BaseTracker):
             # Setup I/O bindings
             self.setup_io_binding_trt()
 
-            self.preprocessor = Preprocessor()
+            self.preprocessor = PreprocessorX_onnx()
 
         else:
             print("not a valid backend. Choose from onnx and tensorrt!")
@@ -175,6 +155,10 @@ class MobileViTTrack(BaseTracker):
                 dim=0) * self.params.search_size / resize_factor).tolist()  # (cx, cy, w, h) [0,1]
             best_bbox = self.map_box_back(pred_box_trt, resize_factor)
 
+        else:
+            print("not a valid backend. Choose from onnx and tensorrt!")
+            exit()
+
         # get the final box result
         self.state = clip_box(best_bbox, H, W, margin=10)
 
@@ -258,6 +242,27 @@ class MobileViTTrack(BaseTracker):
         assert len(self.outputs) > 0
         assert len(self.allocations) > 0
 
+        # Prepare the output data
+        self.outputs_numpy = []
+        for shape, dtype in self.output_spec():
+            self.outputs_numpy.append(np.zeros(shape, dtype))
+
+    def input_spec(self):
+        """
+        Get the specs for the input tensor of the network. Useful to prepare memory allocations.
+        :return: Two items, the shape of the input tensor and its (numpy) datatype.
+        """
+        return self.inputs[0]['shape'], self.inputs[0]['dtype']
+
+    def output_spec(self):
+        """
+        Get the specs for the output tensors of the network. Useful to prepare memory allocations.
+        :return: A list with two items per element, the shape and (numpy) datatype of each output tensor.
+        """
+        specs = []
+        for o in self.outputs:
+            specs.append((o['shape'], o['dtype']))
+        return specs
 
     def map_box_back(self, pred_box: list, resize_factor: float):
         cx_prev, cy_prev = self.state[0] + 0.5 * self.state[2], self.state[1] + 0.5 * self.state[3]
