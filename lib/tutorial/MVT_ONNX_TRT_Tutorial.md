@@ -55,6 +55,6 @@ python tracking/test.py --tracker_name mobilevit_track --tracker_param mobilevit
 |Ocean|ECCV'20|0.611|~10|~130|
 |DiMP50|ICCV'19|0.611|~15|~60|
 
-Our *MVT* tracker achieves better performance than DCF-based [DiMP50](https://github.com/visionml/pytracking) and Siamese-based [Ocean](https://github.com/researchmm/TracKit), while running at least ***4.5***:heavy_multiplication_x: and ***2.3***:heavy_multiplication_x: faster on CPU and GPU, respectively :fire:.
+Our *MVT* tracker achieves better performance than DCF-based [DiMP50](https://github.com/visionml/pytracking) and Siamese-based [Ocean](https://github.com/researchmm/TracKit), while running at least ***4.5****X* and ***2.3****X* faster on CPU and GPU :fire:, respectively.
 
  
