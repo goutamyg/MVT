@@ -9,7 +9,7 @@ git checkout --track origin/multi_framework_inference
 ---
 
 ## ONNX-Runtime Inference
-**Introduction**：[ONNXRUNTIME](https://github.com/microsoft/onnxruntime) is an open-source library by Microsoft for network inference acceleration. The accelerated MVT runs at 70 FPS on a 12th Gen Intel(R) Core-i9 CPU! 
+**Introduction**：[ONNXRUNTIME](https://github.com/microsoft/onnxruntime) is an open-source library by Microsoft for network inference acceleration. The accelerated *MVT* tracker runs at 70 FPS on a 12th Gen Intel(R) Core-i9 CPU! 
 
 ### Installation
 For ONNX-Runtime-based inference on CPU, install
@@ -55,6 +55,6 @@ python tracking/test.py --tracker_name mobilevit_track --tracker_param mobilevit
 |Ocean|ECCV'20|0.611|~10|~130|
 |DiMP50|ICCV'19|0.611|~15|~60|
 
-Our *MVT* tracker achieves better performance than DCF-based [DiMP50](https://github.com/visionml/pytracking) and Siamese-based [Ocean](https://github.com/researchmm/TracKit), while running at ~70 *fps*:zap: on CPU and ~300 *fps*:zap::zap: on GPU.
+Our *MVT* tracker achieves better performance than DCF-based [DiMP50](https://github.com/visionml/pytracking) and Siamese-based [Ocean](https://github.com/researchmm/TracKit), while running at least ***4.5***:heavy_multiplication_x: and ***2.3***:heavy_multiplication_x: faster on CPU and GPU, respectively :fire:.
 
  
