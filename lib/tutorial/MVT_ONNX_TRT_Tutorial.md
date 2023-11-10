@@ -51,9 +51,9 @@ python tracking/test.py --tracker_name mobilevit_track --tracker_param mobilevit
 ## MVT v.s Other Trackers
 | Tracker | Source | GOT10K-test (AUC)| Speed (CPU) | Speed (GPU) |
 |---|---|---|---|---|
-|**MVT**|BMVC'23|**0.633**|**~70**|**~300**|
-|Ocean|ECCV'20|0.611|~10|~130|
-|DiMP50|ICCV'19|0.611|~15|~60|
+|**MVT**|BMVC'23|**0.633**|**~70***fps*|**~300***fps*|
+|Ocean|ECCV'20|0.611|~10*fps*|~130*fps*|
+|DiMP50|ICCV'19|0.611|~15*fps*|~60*fps*|
 
 Our *MVT* tracker achieves better performance than DCF-based [DiMP50](https://github.com/visionml/pytracking) and Siamese-based [Ocean](https://github.com/researchmm/TracKit), while running at least ***4.5*** and ***2.3*** times faster on CPU and GPU :fire:, respectively.
 
