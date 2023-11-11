@@ -9,7 +9,7 @@ git checkout --track origin/multi_framework_inference
 ---
 
 ## ONNX-Runtime Inference
-**Introduction**：[ONNXRUNTIME](https://github.com/microsoft/onnxruntime) is an open-source library by Microsoft for network inference acceleration. The accelerated *MVT* tracker runs at 70 FPS on a 12th Gen Intel(R) Core-i9 CPU! 
+**Introduction**：[ONNXRUNTIME](https://github.com/microsoft/onnxruntime) is an open-source library by Microsoft for network inference acceleration. The accelerated *MVT* tracker runs at 70*fps* :zap: on a 12th Gen Intel(R) Core-i9 CPU.
 
 ### Installation
 For ONNX-Runtime-based inference on CPU, install
