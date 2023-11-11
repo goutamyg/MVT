@@ -2,6 +2,8 @@
 ![MVT_block](assets/MVT.png)
 
 ## News
+**`10-11-2023`**: ONNX-Runtime and TensorRT-based inference code is released. Now, our ***MVT*** runs at ~70 *fps* on CPU and ~300 *fps* on GPU :zap::zap:. Check the [page](https://github.com/goutamyg/MVT/blob/multi_framework_inference/lib/tutorial/MVT_ONNX_TRT_Tutorial.md) for details.
+
 **`14-09-2023`**: The pretrained tracker model is released
 
 **`13-09-2023`**: The paper is available on [arXiv](https://arxiv.org/abs/2309.05829) now
