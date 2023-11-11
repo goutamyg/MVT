@@ -9,7 +9,7 @@ git checkout --track origin/multi_framework_inference
 ---
 
 ## ONNX-Runtime Inference
-**Introduction**：[ONNXRUNTIME](https://github.com/microsoft/onnxruntime) is an open-source library by Microsoft for network inference acceleration. The accelerated *MVT* tracker runs at 70*fps* :zap: on a 12th Gen Intel(R) Core-i9 CPU.
+**Introduction**： [ONNXRUNTIME](https://github.com/microsoft/onnxruntime) is an open-source library by Microsoft for network inference acceleration. The accelerated *MVT* tracker runs at 70*fps* :zap: on a 12th Gen Intel(R) Core-i9 CPU.
 
 ### Installation
 For ONNX-Runtime-based inference on CPU, install
@@ -31,7 +31,7 @@ python tracking/test.py --tracker_name mobilevit_track --tracker_param mobilevit
 ---
 
 ## TensorRT Conversion and Inference
-**Introduction** [TensorRT](https://github.com/NVIDIA/TensorRT) is a high-performance deep learning inference SDK by NVIDIA:registered:. Using TensorRT as the backend, our *MVT* tracker runs at a speed of ~300*fps* :zap::zap: on an NVidia RTX 3090 GPU.
+**Introduction**: [TensorRT](https://github.com/NVIDIA/TensorRT) is a high-performance deep learning inference SDK by NVIDIA:registered:. Using TensorRT as the backend, our *MVT* tracker runs at a speed of ~300*fps* :zap::zap: on an NVidia RTX 3090 GPU.
 
 ### Installation
 ```
