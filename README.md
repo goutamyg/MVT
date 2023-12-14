@@ -52,6 +52,12 @@ python tracking/test.py --tracker_name mobilevit_track --tracker_param mobilevit
 * Change the `DEVICE` variable between `cuda` and `cpu` in the `--tracker_param` file for GPU and CPU-based inference, respectively  
 * The raw results will be stored under `output/test/` folder
 
+## Profile tracker model
+* To count the model parameters, run
+```
+python tracking/profile_model.py
+```
+
 ## Acknowledgements
 * We use the Separable Self-Attention Transformer implementation and the pretrained `MobileViT` backbone from [ml-cvnets](https://github.com/apple/ml-cvnets). Thank you!
 * Our training code is built upon [OSTrack](https://github.com/botaoye/OSTrack) and [PyTracking](https://github.com/visionml/pytracking)
