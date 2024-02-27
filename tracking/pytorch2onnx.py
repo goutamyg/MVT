@@ -204,7 +204,7 @@ if __name__ == "__main__":
 
     # convert model to onnx
     tracker_name = "mobilevit_track"
-    tracker_param = "mobilevit_256_64x2_got10k_ep100_cosine_annealing"
+    tracker_param = "mobilevit_256_128x1_got10k_ep100_cosine_annealing"
     tracker = Tracker(tracker_name, tracker_param, "video")
 
     settings = env_settings()
