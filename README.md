@@ -1,4 +1,4 @@
-# [Mobile Vision Transformer-based Visual Object Tracking](https://arxiv.org/abs/2309.05829) [BMVC2023] official implementation
+# [Mobile Vision Transformer-based Visual Object Tracking](https://papers.bmvc2023.org/0800.pdf) [BMVC2023] official implementation
 ![MVT_block](assets/MVT.png)
 
 ## News
@@ -66,13 +66,12 @@ python tracking/profile_model.py
 If our work is useful for your research, please consider citing:
 
 ```Bibtex
-@InProceedings{Gopal2023Mob,
-  author       = "Goutam Yelluru Gopal and Maria Amer",
-  title        = "Mobile Vision Transformer-based Visual Object Tracking",
-  booktitle    = "34th British Machine Vision Conference (BMVC)",
-  year         = "2023",
-  pages        = "8",
-  month        = "Nov. 20-24",
-  address      = "Aberdeen, UK",
+@inproceedings{Gopal_2023_BMVC,
+author    = {Goutam Yelluru Gopal and Maria Amer},
+title     = {Mobile Vision Transformer-based Visual Object Tracking},
+booktitle = {34th British Machine Vision Conference 2023, {BMVC} 2023, Aberdeen, UK, November 20-24, 2023},
+publisher = {BMVA},
+year      = {2023},
+url       = {https://papers.bmvc2023.org/0800.pdf}
 }
 ```
