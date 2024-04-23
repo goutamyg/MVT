@@ -33,7 +33,7 @@ lib/test/evaluation/local.py  # paths about testing
 * Set the path of training datasets in `lib/train/admin/local.py`
 * Place the pretrained backbone model under the `pretrained_models/` folder
 * For data preparation, please refer to [this](https://github.com/botaoye/OSTrack/tree/main)
-* Uncomment lines `63, 67, and 71` in the [base_backbone.py](https://github.com/goutamyg/MVT/blob/main/lib/models/mobilevit_track/base_backbone.py) file.  
+* Uncomment lines `63, 67, and 71` in the [base_backbone.py](https://github.com/goutamyg/MVT/blob/main/lib/models/mobilevit_track/base_backbone.py) file. Replace [these lines](https://github.com/goutamyg/MVT/blob/main/lib/test/tracker/mobilevit_track.py#L68-L78) with ```self.z_dict1 = template.tensors```.
 * Run
 ```
 python tracking/train.py --script mobilevit_track --config mobilevit_256_128x1_got10k_ep100_cosine_annealing --save_dir ./output --mode single
